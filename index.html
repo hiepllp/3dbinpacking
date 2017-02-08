@@ -1,0 +1,263 @@
+<!doctype html public "-//w3c//dtd html 4.0 transitional//en">
+<html>
+ <head>
+  <title>Algorithm for the three-dimensional bin packing problem</title>
+  
+  
+  <script src="./jquery-1.12.3.min.js"></script>    
+  <script src="./filereader.js"></script>    
+  <link rel="stylesheet" href="./style.css">
+
+
+  <style type="text/css">
+	
+
+
+*{
+	
+	font-size: 20px;
+	text-align: center;	
+	font-family:verdana;
+  /*text-shadow: 1px 1px 1px #D7D7D7, 1px 1px 1px rgba(0, 0, 0, 0.7);*/
+  /*color: #8F8F8F;*/
+}	
+
+
+a {
+    text-decoration: none;
+}
+
+
+
+tr.selec:hover {
+    background: #000;
+}
+tr.selec:hover td {
+    background: #c7d4dd !important;
+    cursor: pointer; cursor: hand
+}
+
+
+</style>
+
+
+
+
+</head>
+ <body>
+		
+<table width=100% border=0>
+<tr><td width="70%">									
+							<table cellspacing="0" Style="padding:5px;font-size: 40px width: 50%;margin-left: auto;margin-right: auto;"  >                                       
+              <tr>
+                <td height="35"></td>               
+                <td width=100><b>Width<b></td>
+                <td width=100><b>Height<b></td>
+                <td width=100><b>Depth<b></td>                        
+              </tr>  							
+							<tr height="25">              
+                <td ><b>Container:</b></td>
+                <td ><input class="text" type="text"	id="W" value="235"   style="width:150px"></td>
+                <td ><input class="text" type="text" 	id="H" value="240" style="width:150px"></td>
+                <td ><input class="text" type="text" 	id="D" value="590" style="width:150px"></td>                                
+                <td ><input class="text" type="button" 	onclick="ver_excel('');" id="recal"  value="Calculate" style="width:150px"></td>                           
+              </tr>                
+              <tr class="selec" onclick="$('#W').val(235);$('#H').val(240);$('#D').val(590);">
+                <td>20´×8´×8´6"</td>
+                <td >235</td>
+                <td >240</td>
+                <td >590</td>                
+                <td>33,2m3</td>
+              </tr>             
+							<tr class="selec" onclick="$('#W').val(235);$('#H').val(240);$('#D').val(1200);">                
+                <td>40´×8´×8´6"</td>
+                <td >235</td>
+                <td >240</td>
+                <td >1200</td>  
+                <td>67,6m3</td>              
+              </tr>  
+							<tr class="selec" onclick="$('#W').val(235);$('#H').val(270);$('#D').val(1200);">                
+                <td>40´×8´×9´6"</td>
+                <td >235</td>
+                <td >270</td>
+                <td >1200</td>     
+                <td>76,1m3</td>                           
+              </tr>                
+							<tr><td>&nbsp</td></tr>                                                       
+  						</table>				
+</td><td>		
+		
+		<div id="dropbox" >
+		<br>
+		<div class="text2"  align="center" style="width::100%;font-size:22px;">Drag and drop XSL file  (XLS 5.0/95) </div><br>
+			
+			<div class="text2"  align="center" style="width::100%;font-size:18px;">With columns header W,H,D <br>followed the boxes dimensions <br>in integer without decimals.</div>		
+		</div>
+		<span class="upload-progress"></span>	
+		<input type="hidden" id="file">		
+</td>
+</tr></table>
+	
+	<table>
+	<tr>
+		
+		<td style="vertical-align:top;" width="70%"><div id="container"></div></td>
+		<td  style="vertical-align:top;" ><div id="results"></div></td>
+	</tr>
+</table>
+<input type="hidden" id="binview" value="">
+</body>
+</html>
+
+
+<script>
+	
+
+$(document).ready(function(){	
+	var dropbox;  
+	var oprand = {
+		dragClass : "active",
+	    on: {
+	    	load: function(e, file) {			
+					var excelType = /excel.*/;
+					if (!file.type.match(excelType)) {  
+				  	alert("File \""+file.name+"\" UPLOAD XLS FILE WITH COLUMNS HEADER W H D");
+				  	return false;	
+					}			
+					// check file size
+					if (parseInt(file.size / 1024) > 2050) {  
+				  	alert("File \""+file.name+"\" is too big.Max allowed size is 2 MB.");
+				  	return false;	
+					} 
+					create_box(e,file);
+	    	},
+	    }
+	};
+	FileReaderJS.setupDrop(document.getElementById('dropbox'), oprand); 	
+});
+
+
+create_box = function(e,file){
+	var rand = Math.floor((Math.random()*100000)+3);
+	var imgName = file.name; // not used, Irand just in case if user wanrand to print it.
+	var src		= e.target.result;
+	src = "./images/excel.gif";
+	var template = '<div class="eachImage" id="'+rand+'" onclick="ver_excel(\''+ imgName +'\')" >';
+	template += '<span class="preview" id="'+rand+'"><img src="'+src+'"><span class="overlay"><span class="updone"></span></span>';
+	template += '</span>';
+	template += '<div class="progress" id="'+rand+'"><span></span></div>'+imgName; 
+	if($("#dropbox .eachImage").html() == null)
+		$("#dropbox").html(template);
+	else
+		$("#dropbox").append(template);	
+	// upload image
+	upload(file,rand);
+}
+
+ver_excel = function(filename)
+{
+	if(filename.length){ 	
+	   $("#file").val(filename);
+	}else{
+	 	 filename = $("#file").val();
+	}
+	var w = $("#W").val();
+	var h = $("#H").val();
+	var d = $("#D").val();
+	//$("#results").html('<img src="./images/wait.gif">');
+	$.ajax(
+	{
+	  url: './box_read_excel.php?file='+filename+'&w='+w+'&h='+h+'&d='+d,
+	  beforeSend: function( xhr ) {
+	    xhr.overrideMimeType( "text/plain; charset=x-user-defined" );
+	  }
+	})
+	.done(function( data ) {
+	    if ( console && console.log ) {
+	      //console.log( "Sample of data:", data.slice( 0, 100 ) );
+	      $("#results").html(data);
+	      if($("#binview").val()) viewContainer($("#binview").val());
+	      return;
+	    }
+	});
+}
+
+upload = function(file,rand){
+	// now upload the file	
+	var xhr = new Array();
+	xhr[rand] = new XMLHttpRequest();
+	xhr[rand].open("post", "ajax_fileupload.php?filename="+file.name, true);
+	xhr[rand].upload.addEventListener("progress", function (event) {
+		console.log(event);
+		if (event.lengthComputable) {
+			$(".progress[id='"+rand+"'] span").css("width",(event.loaded / event.total) * 100 + "%");
+			$(".preview[id='"+rand+"'] .updone").html(((event.loaded / event.total) * 100).toFixed(2)+"%");
+		}
+		else {
+			alert("Failed to compute file upload length");
+		}
+	}, false);
+	xhr[rand].onreadystatechange = function (oEvent) {  
+	  if (xhr[rand].readyState === 4) {  
+		if (xhr[rand].status === 200) {  
+		  $(".progress[id='"+rand+"'] span").css("width","100%");
+		  $(".preview[id='"+rand+"']").find(".updone").html("100%");
+		  $(".preview[id='"+rand+"'] .overlay").css("display","none");
+		  	ver_excel(file.name);		 
+		} else {  
+		  alert("Error : Unexpected error while uploading file");  
+		}  
+	  }  
+	};  	
+	// Set headers	
+	xhr[rand].setRequestHeader("Content-Type", "multipart/form-data");
+	xhr[rand].setRequestHeader("X-File-Name", file.fileName);
+	xhr[rand].setRequestHeader("X-File-Size", file.fileSize);
+	xhr[rand].setRequestHeader("X-File-Type", file.type);
+	// Send the file (doh)
+	xhr[rand].send(file);
+}	
+	
+	
+	
+	
+var xAngle = 0 , yAngle = 0, zAngle = 0;
+$('body').keydown(function(evt) {
+    switch(evt.keyCode) {
+        case 37: // left
+            yAngle -= 5;
+            evt.preventDefault();
+            break;
+        case 38: // up
+            xAngle += 5;
+            evt.preventDefault();
+            break;
+
+        case 39: // right
+            yAngle += 5;
+            break;
+
+        case 40: // down
+            xAngle -= 5;
+            evt.preventDefault();
+            break;
+				case 187: // down
+            zAngle += 5;
+            evt.preventDefault();
+            break;            
+				case 189: // down
+            zAngle -= 5;
+            evt.preventDefault();
+            break;                        
+    };    
+    $("#first_line_of_cubes").attr("style", "-webkit-transform: rotateX(" + xAngle + "deg) rotateY(" + yAngle + "deg) rotateZ(-180deg)  translateZ("+zAngle+"px)");            
+    
+    
+    $("#xAngle").val(xAngle);            
+    $("#yAngle").val(yAngle);            
+    $("#zAngle").val(zAngle);            
+    
+    
+});
+
+</script>
