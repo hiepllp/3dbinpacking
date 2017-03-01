@@ -57,8 +57,17 @@ function verOpti($inputFile){
 		}else{
 			$cnt[$c] +=1;
 		}							
-		$bobo[$row[10]]+=1;
-		$bobov[$row[10]]+=$volbb;						
+		
+		if(isset($row[10]))
+		{			
+			if(!isset($bobo[$row[10]])) $bobo[$row[10]]=0;
+			$bobo[$row[10]]+=1;
+			
+			if(!isset($bobov[$row[10]])) $bobov[$row[10]] = 0;
+			$bobov[$row[10]]+=$volbb;						
+		}
+		
+		
 	}	// end freach
 	echo "<table style='margin-left: auto;margin-right: auto;'><tr><td width=100><b>Bin</b></td><td width=100><b>Boxes</b></td><td width=150><b>Volume used</b></td></tr>";
 	$Vc = $bobov[0];

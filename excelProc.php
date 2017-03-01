@@ -32,16 +32,25 @@ $tiposTabla = array(
 
 
 
-//echo "--------",print_r($tiposTabla);
+//echo "--------<pre>",print_r($tiposTabla);
+
+
 
 	foreach ($tiposTabla as $clave => $cabs)  // tipos de tablas clave
 	{
 		$is = true;
 		$c = $cini;
+		
+		
+		
 		foreach ($cabs as $cab){  // columnas      
-			 			
-     	 $ar = TextoCab($arr[$c]);      	            
-        if ($ar!= $cab ) {  $is=false; break;}else{$c+=1; }    		      
+			 	
+		//	 		if (isset($arr[$c]) echo "--------<pre>",print_r($arr[$c]);
+			 		
+			 		
+			 $ar ="";
+			 if (isset($arr[$c]))	$ar = TextoCab($arr[$c]);      	            
+       if ($ar!= $cab ) {  $is=false; break;}else{$c+=1; }    		      
 		}						
 		if($is==true){		
 			//echo "<br> tabla encontrada  clave $clave";// print_r($arr);				echo "<br>is-->"; print_r($cabs);
@@ -61,6 +70,7 @@ function buscaDatosSheet($arr,$she)
 	do{
 	  $ret = 0;
 		//echo "------------".$arr->sheets[$she]['cells'][$f][1];
+		if(isset($arr->sheets[$she]['cells'][$f][1]))
 		if(strlen($arr->sheets[$she]['cells'][$f][1])){			  
 			  $arrR= array( $arr->sheets[$she]['cells'][$f][1] ,$arr->sheets[$she]['cells'][$f][2] ); 
 			  array_push($arrRet , $arrR ); 
@@ -97,6 +107,8 @@ $tiposTabla = array(
 		$ret = 1;	
 		$c= $col;		
 		foreach ($tiposTabla[$tab] as $titcab){   // muestra encabezado de la tabla encontrada		
+				$val ="";
+				if (isset($arr->sheets[$she]['cells'][$f][$c]))
 				$val = $arr->sheets[$she]['cells'][$f][$c];			
 				if(!strlen($val)) $ret = 0;				
 				$c+=1;
@@ -152,9 +164,13 @@ function buscaLineasPresupuestoDesdeExcel($filePath)
 				      $cell = isset($sheet['cells'][$x][$y]) ? $sheet['cells'][$x][$y] : '';					      
 				      //echo "<br>--->".TextoCab($cell)  ;					      					      
 							// solo se busca la tabla si la culumna de la izq esta en blanco o es la primera columna (A)								
-							if( $y==1 || ( $y>1 && $sheet['cells'][$x][$y-1]=="" ) )
+							if( $y==1 || ( $y>1  ) ) // && $sheet['cells'][$x][$y-1]==""
 							{
+								
+								if(isset($sheet['cells'][$x]))
 								$in = buscaCabeceraTabla($sheet['cells'][$x],$y);
+								
+								
 								if($in != -1 )
 								{									   
 									$datos = buscaDatosTabla($excel, $i, $x, $y, $in);	// retorna array con los datos de la tabla encontrada													
@@ -163,10 +179,12 @@ function buscaLineasPresupuestoDesdeExcel($filePath)
 										$datosSheet = buscaDatosSheet($excel, $i);	//Hoja Excel desde An,Bn n= 1...n++ hasta An=null
 										//echo "<pre>....",print_r($datosSheet)."</pre>";
 										
-									}									  										
+									}				
+									$dataDes="";					  										
+									if(isset($sheet['cells'][$x-1][$y]))
 									$dataDes = $sheet['cells'][$x-1][$y]; 											
 									$hash_file = hash_file('md5', $filePath);																								
-									$elemento = array(sheet=>$i,row=>$x,column=>$y, table=>$in, path=>$filePath,hashFile=>$hash_file, dataH=>$tiposTabla[$in], data=>$datos, dataDes=>$dataDes, dataSheet=>$datosSheet );									  
+									$elemento = array("sheet"=>$i,"row"=>$x,"column"=>$y, "table"=>$in, "path"=>$filePath,"hashFile"=>$hash_file, "dataH"=>$tiposTabla[$in], "data"=>$datos, "dataDes"=>$dataDes, "dataSheet"=>$datosSheet );									  
 								  array_push($pila, $elemento);									   									   
 							  }									
 							}								
